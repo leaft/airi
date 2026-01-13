@@ -2,8 +2,9 @@
 import { all } from '@proj-airi/i18n'
 import { useSettings } from '@proj-airi/stage-ui/stores/settings'
 import { FieldCheckbox, FieldSelect, useTheme } from '@proj-airi/ui'
-import { computed } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {useElectronAllDisplays} from  '@proj-airi/stage-tamagotchi/renderer/composables/electron-vueuse'
 
 const props = withDefaults(defineProps<{
   needscontrolsIslandIconSizeSetting?: boolean
@@ -20,6 +21,37 @@ const { isDark: dark } = useTheme()
 
 const languages = computed(() => {
   return Object.entries(all).map(([value, label]) => ({ value, label }))
+})
+
+const showTamagotchiDisplay = computed(() => import.meta.env.RUNTIME_ENVIRONMENT === 'electron')
+const displayOptions = ref<Array<{ value: string, label: string }>>([
+  { value: 'primary', label: t('settings.tamagotchi.display.primary') },
+])
+
+onMounted(async () => {
+  if (!showTamagotchiDisplay.value)
+    return
+
+
+    // dynamic import of the tamagotchi renderer composable that wraps electron.screen
+    const mod = await import('/Users/jiangzhihang/code/airi/apps/stage-tamagotchi/src/renderer/composables/electron-vueuse/use-electorn-all-displays')
+    // composable returns a ref of displays
+    const allDisplays = mod.useElectronAllDisplays()
+
+    watchEffect(() => {
+      const displays = allDisplays.value || []
+      displayOptions.value = displays.map(d => ({
+        value: String(d.id ?? `${d.bounds?.x}_${d.bounds?.y}`),
+        label: d.id != null ? `Display ${d.id} — ${d.size?.width}×${d.size?.height}` : `${d.size?.width}×${d.size?.height}`,
+      }))
+      if (!displayOptions.value.length) {
+        displayOptions.value = [{ value: 'primary', label: t('settings.tamagotchi.display.primary') }]
+      }
+    })
+  }
+  catch (e) {
+    // silently ignore on non-electron runtimes
+  }
 })
 </script>
 
@@ -68,6 +100,21 @@ const languages = computed(() => {
         { value: 'large', label: t('settings.controls-island.icon-size.large') },
         { value: 'small', label: t('settings.controls-island.icon-size.small') },
       ]"
+    />
+
+    <!-- Tamagotchi Display (Electron only) -->
+    <FieldSelect
+      v-if="showTamagotchiDisplay"
+      v-model="settings.tamagotchiDisplay"
+      v-motion
+      :initial="{ opacity: 0, y: 10 }"
+      :enter="{ opacity: 1, y: 0 }"
+      :duration="250 + (5 * 10)"
+      :delay="5 * 50"
+      transition="all ease-in-out duration-250"
+      :label="t('settings.tamagotchi.display.title')"
+      :description="t('settings.tamagotchi.display.description')"
+      :options="displayOptions"
     />
 
     <div

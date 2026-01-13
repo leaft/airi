@@ -116,6 +116,7 @@ export const useSettings = defineStore('settings', () => {
   const [allowVisibleOnAllWorkspaces, resetAllowVisibleOnAllWorkspaces] = createResettableLocalStorage('settings/allow-visible-on-all-workspaces', true)
 
   const [controlsIslandIconSize, resetControlsIslandIconSize] = createResettableLocalStorage<'auto' | 'large' | 'small'>('settings/controls-island/icon-size', 'auto')
+  const [tamagotchiDisplay, resetTamagotchiDisplay] = createResettableLocalStorage<string | undefined>('settings/tamagotchi/display', undefined)
 
   function getLanguage() {
     let language = localStorage.getItem('settings/language')
@@ -189,6 +190,7 @@ export const useSettings = defineStore('settings', () => {
 
     resetAllowVisibleOnAllWorkspaces()
     resetControlsIslandIconSize()
+    resetTamagotchiDisplay()
 
     await updateStageModel()
   }
@@ -216,6 +218,7 @@ export const useSettings = defineStore('settings', () => {
 
     allowVisibleOnAllWorkspaces,
     controlsIslandIconSize,
+    tamagotchiDisplay,
 
     setThemeColorsHue,
     applyPrimaryColorFrom,
