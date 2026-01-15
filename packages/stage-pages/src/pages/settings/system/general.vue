@@ -4,7 +4,6 @@ import { useSettings } from '@proj-airi/stage-ui/stores/settings'
 import { FieldCheckbox, FieldSelect, useTheme } from '@proj-airi/ui'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {useElectronAllDisplays} from  '@proj-airi/stage-tamagotchi/renderer/composables/electron-vueuse'
 
 const props = withDefaults(defineProps<{
   needscontrolsIslandIconSizeSetting?: boolean
@@ -29,12 +28,13 @@ const displayOptions = ref<Array<{ value: string, label: string }>>([
 ])
 
 onMounted(async () => {
-  if (!showTamagotchiDisplay.value)
-    return
-
+  try {
+    if (!showTamagotchiDisplay.value)
+      return
 
     // dynamic import of the tamagotchi renderer composable that wraps electron.screen
-    const mod = await import('/Users/jiangzhihang/code/airi/apps/stage-tamagotchi/src/renderer/composables/electron-vueuse/use-electorn-all-displays')
+    // Use relative path since @proj-airi/stage-tamagotchi alias is not configured in vite/electron-vite config
+    const mod = await import('../../../../../../apps/stage-tamagotchi/src/renderer/composables/electron-vueuse')
     // composable returns a ref of displays
     const allDisplays = mod.useElectronAllDisplays()
 
@@ -50,7 +50,8 @@ onMounted(async () => {
     })
   }
   catch (e) {
-    // silently ignore on non-electron runtimes
+  // silently ignore on non-electron runtimes
+    console.error(e)
   }
 })
 </script>
